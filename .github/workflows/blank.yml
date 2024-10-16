@@ -46,7 +46,8 @@ jobs:
           haxelib install hxcpp > /dev/null --quiet
           haxelib install hmm --quiet
           haxelib run hmm install
-
+          haxelib git extension-webm https://github.com/KadeDev/extension-webm
+          
       - name: Configure Android
         run: |
           haxelib run lime setup -alias -y
