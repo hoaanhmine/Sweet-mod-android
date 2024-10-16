@@ -1,109 +1,106 @@
-name: Android Build
+name: Mobile + Release
 on: workflow_dispatch
 jobs:
-  Build:
+  Android:
     runs-on: ubuntu-latest
-    permissions:
-        contents: write
-        actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@main
-        with:
-          submodules: true
-
-      - name: Setup Android NDK
-        id: setup-ndk
-        uses: nttld/setup-ndk@main
-        with:
-          ndk-version: r21e
-
-      - name: Setup Java JDK
-        uses: actions/setup-java@main
-        with:
-          distribution: 'zulu'
-          java-version: '11'
 
       - name: Setup Haxe
         uses: krdlab/setup-haxe@v1.2.0
         with:
           haxe-version: 4.2.5
 
-      - name: Restore Previous Cache
-        id: cache-debug-build-android-restore
-        uses: actions/cache/restore@main
-        with:
-          path: |
-            .haxelib/
-            export/release/android/haxe/
-            export/release/android/obj/
-          key: cache-android-build
-
-      - name: Installing Libraries
+      - name: Install Libraries
         run: |
-          haxelib git extension-androidtools https://github.com/MAJigsaw77/extension-androidtools df9dfd0cda74e5460ae3afcfff1081c50959ed4a --quiet --skip-dependencies
-          haxelib setup ~/haxelib
-          haxelib install hxcpp > /dev/null --quiet
           haxelib install hmm --quiet
-          haxelib run hmm install
+          haxelib run hmm install --quiet
+
+      - name: Configure Android
+        run: |
+          haxelib run lime config ANDROID_SDK $ANDROID_HOME
+          haxelib run lime config ANDROID_NDK_ROOT $ANDROID_NDK_LATEST_HOME
+          haxelib run lime config JAVA_HOME $JAVA_HOME_17_X64
+          haxelib run lime config ANDROID_SETUP true
+
+      - name: Compile
+        run: haxelib run lime build android -D officialBuild -final
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: androidBuild
+          path: export/release/android/bin/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+  iOS:
+    runs-on: macos-13
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v1.2.0
+        with:
+          haxe-version: 4.2.5
+
+      - name: Install Libraries
+        run: |
+          haxelib install hmm --quiet
+          haxelib run hmm install --quiet
           haxelib git extension-webm https://github.com/KadeDev/extension-webm
           haxelib install newgrounds
           haxelib git discord_rpc https://github.com/Aidan63/linc_discord-rpc
           haxelib install polymod
           haxelib git hxCodec https://github.com/polybiusproxy/hxCodec
-          
-      - name: Configure Android
+      - name: Compile
+        run: haxelib run lime build ios -D officialBuild -nosign -arm64 -final
+
+      - name: Make Ipa
         run: |
-          haxelib run lime setup -alias -y
-          haxelib run lime config ANDROID_SDK $ANDROID_HOME
-          haxelib run lime config ANDROID_NDK_ROOT $ANDROID_NDK_HOME
-          haxelib run lime config JAVA_HOME $JAVA_HOME
-          haxelib run lime config ANDROID_SETUP true
-        env:
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          cd export/release/ios/build/Release-iphoneos
+          mkdir Payload
+          mv *.app Payload
+          zip -r PsychEngine.ipa Payload
 
-      - name: Building
-        run: haxelib run lime build android -final
-
-      - name: Clear Previous Cache
-        uses: actions/github-script@main
-        with:
-          script: |
-            try {
-            	const caches = await github.rest.actions.getActionsCacheList({
-            		owner: context.repo.owner,
-            		repo: context.repo.repo,
-            	})
-            	if (typeof caches.data.actions_caches != null && caches.data.actions_caches.length > 0) {
-            		for (const cache of caches.data.actions_caches) {
-            			if (cache.key == "cache-android-build") {
-            				console.log('Clearing ' + cache.key + '...')
-            				await github.rest.actions.deleteActionsCacheById({
-            					owner: context.repo.owner,
-            					repo: context.repo.repo,
-            					cache_id: cache.id,
-            				})
-            				console.log("Previous Cache Cleared!")
-            			}
-            		}
-            	}
-            } catch (error) {
-            	console.log(error.message);
-            }
-
-      - name: Save Current Cache
-        id: cache-release-build-android-save
-        uses: actions/cache/save@main
-        with:
-          path: |
-            .haxelib/
-            export/release/android/haxe/
-            export/release/android/obj/
-          key: cache-android-build
+      - name: Make Zip For Release
+        run: |
+           cd export/release/ios/build/Release-iphoneos
+           zip PsychEngine-iOS.zip PsychEngine.ipa
 
       - name: Upload Artifact
         uses: actions/upload-artifact@main
         with:
-          name: FNF' Minus
-          path: export/release/android/bin/app/build/outputs/apk/debug
-          if-no-files-found: warn
+          name: iOSBuild
+          path: export/release/ios/build/Release-iphoneos/*.zip
+          if-no-files-found: error
+  Releaser:
+    needs: [Android, iOS]
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Download Android Build
+        uses: actions/download-artifact@main
+        with:
+           name: androidBuild
+           path: /home/runner
+
+      - name: Move Android File
+        run: mv /home/runner/PsychEngine-release.apk /home/runner/PsychEngine-Android.apk
+
+      - name: Download iOS Build
+        uses: actions/download-artifact@main
+        with:
+           name: iOSBuild
+           path: /home/runner
+
+      - name: Publish The Release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          automatic_release_tag: "0.6.3"
+          title: "0.6.3"
+          files: |
+            /home/runner/*.apk
+            /home/runner/*.zip
