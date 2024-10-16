@@ -47,6 +47,7 @@ jobs:
           haxelib install hmm --quiet
           haxelib run hmm install
           haxelib git extension-webm https://github.com/KadeDev/extension-webm
+          haxelib install newgrounds
           
       - name: Configure Android
         run: |
