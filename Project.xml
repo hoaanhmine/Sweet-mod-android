@@ -82,6 +82,7 @@
 	<assets path="assets/fonts" embed='true'/>
 	<!-- _______________________________ Libraries ______________________________ -->
 	<haxelib name="extension-androidtools" if="android" />
+		
 		<!--Mobile Controls Define-->
 	<define name="mobileC" if="mobile" /> <!--Can be added windows, mac or linux-->
 
@@ -89,7 +90,7 @@
 	<haxedef name="HXCPP_CHECK_POINTER" />
 	<haxedef name="HXCPP_STACK_LINE" />
 	<haxedef name="HXCPP_STACK_TRACE" />
-
+	
 	<section if="android">
 		<config>
 			<!--Gradle-->
@@ -125,6 +126,7 @@
 	<haxelib name="discord_rpc" if="desktop"/>
 	<haxelib name="linc_luajit"/>
 	<haxelib name="hxvm-luajit" if="desktop"/>
+	<haxelib name="hxCodec" if="desktop || mobile" />
 	<!-- <haxelib name="hxcpp-debug-server" if="desktop"/> -->
 
 	<!-- <haxelib name="markdown" /> -->
