@@ -16,7 +16,11 @@ jobs:
         run: |
           haxelib install hmm --quiet
           haxelib run hmm install --quiet
-
+          haxelib git extension-webm https://github.com/KadeDev/extension-webm
+          haxelib install newgrounds
+          haxelib git discord_rpc https://github.com/Aidan63/linc_discord-rpc
+          haxelib install polymod
+          haxelib git hxCodec https://github.com/polybiusproxy/hxCodec
       - name: Configure Android
         run: |
           haxelib run lime config ANDROID_SDK $ANDROID_HOME
@@ -33,47 +37,13 @@ jobs:
           name: androidBuild
           path: export/release/android/bin/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
-  iOS:
-    runs-on: macos-13
-    steps:
-      - name: Checkout
-        uses: actions/checkout@main
-
-      - name: Setup Haxe
-        uses: krdlab/setup-haxe@v1.2.0
-        with:
-          haxe-version: 4.2.5
-
-      - name: Install Libraries
-        run: |
-          haxelib install hmm --quiet
-          haxelib run hmm install --quiet
-          haxelib git extension-webm https://github.com/KadeDev/extension-webm
-          haxelib install newgrounds
-          haxelib git discord_rpc https://github.com/Aidan63/linc_discord-rpc
-          haxelib install polymod
-          haxelib git hxCodec https://github.com/polybiusproxy/hxCodec
-      - name: Compile
-        run: haxelib run lime build ios -D officialBuild -nosign -arm64 -final
-
-      - name: Make Ipa
-        run: |
-          cd export/release/ios/build/Release-iphoneos
-          mkdir Payload
-          mv *.app Payload
-          zip -r PsychEngine.ipa Payload
-
+          
       - name: Make Zip For Release
         run: |
            cd export/release/ios/build/Release-iphoneos
            zip PsychEngine-iOS.zip PsychEngine.ipa
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@main
-        with:
-          name: iOSBuild
-          path: export/release/ios/build/Release-iphoneos/*.zip
-          if-no-files-found: error
+
   Releaser:
     needs: [Android, iOS]
     runs-on: ubuntu-latest
@@ -86,13 +56,7 @@ jobs:
            path: /home/runner
 
       - name: Move Android File
-        run: mv /home/runner/PsychEngine-release.apk /home/runner/PsychEngine-Android.apk
-
-      - name: Download iOS Build
-        uses: actions/download-artifact@main
-        with:
-           name: iOSBuild
-           path: /home/runner
+        run: mv /home/runner/PsychEngine-release.apk /home/runner/Mod-Android.apk
 
       - name: Publish The Release
         uses: marvinpinto/action-automatic-releases@latest
