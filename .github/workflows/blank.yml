@@ -49,6 +49,7 @@ jobs:
           haxelib git extension-webm https://github.com/KadeDev/extension-webm
           haxelib install newgrounds
           haxelib git discord_rpc https://github.com/Aidan63/linc_discord-rpc
+          haxelib install polymod
           
       - name: Configure Android
         run: |
