@@ -32,6 +32,7 @@ jobs:
           haxelib git discord_rpc https://github.com/Aidan63/linc_discord-rpc
           haxelib install polymod
           haxelib git hxCodec https://github.com/polybiusproxy/hxCodec
+          haxelib git hxvlc https://github.com/MAJigsaw77/hxvlc.git
       - name: Configure Android
         run: |
           haxelib run lime config ANDROID_SDK $ANDROID_HOME
