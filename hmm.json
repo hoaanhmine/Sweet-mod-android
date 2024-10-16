@@ -62,13 +62,6 @@
       "url": "https://github.com/polybiusproxy/hxCodec"
     },
     {
-      "name": "SScript",
-      "type": "git",
-      "dir": null,
-      "ref": "main",
-      "url": "https://github.com/mcagabe19-stuff/SScript-17.0.618"
-    },
-    {
       "name": "discord_rpc",
       "type": "git",
       "dir": null,
